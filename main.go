@@ -9,6 +9,11 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 const (
@@ -55,10 +60,53 @@ func main() {
 		}
 	}()
 
-	// Modulate the sine wave by incrementing or decrementing its value every second.
-	for i := 0; i < 100; i++ {
-		sineWave.Set(math.Sin(float64(i)))
-		// fmt.Println("Sine wave value:", sineWave.())
-		time.Sleep(time.Second)
+	amplitude := 100.0
+	frequency := 3.348
+	sampleRate := 100.0
+	numSamples := 30
+
+	sine := make([]float64, numSamples)
+	for i := range sine {
+		sine[i] = amplitude * math.Sin(2*math.Pi*frequency*float64(i)/sampleRate)
+	}
+
+	plotWave(sine)
+
+	for {
+		// Print the modulated wave
+		for i := range sine {
+			value := sine[i]
+			sineWave.Set(value)
+			fmt.Println("Sine wave value:", i, value)
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+func waveToPlotter(wave []float64) plotter.XYs {
+	pts := make(plotter.XYs, len(wave))
+	for i := range pts {
+		pts[i].X = float64(i)
+		pts[i].Y = wave[i]
+	}
+	return pts
+}
+
+func plotWave(wave []float64) {
+	p := plot.New()
+
+	p.Title.Text = "Plotutil example"
+	p.X.Label.Text = "X"
+	p.Y.Label.Text = "Y"
+
+	err := plotutil.AddLinePoints(p,
+		"sine", waveToPlotter(wave))
+	if err != nil {
+		panic(err)
+	}
+
+	// Save the plot to a PNG file.
+	if err := p.Save(4*vg.Inch, 4*vg.Inch, "points.png"); err != nil {
+		panic(err)
 	}
 }
