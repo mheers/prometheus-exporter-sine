@@ -1,7 +1,6 @@
-all: docker
+all: build
 
-docker:
-	docker build -t mheers/prometheus-exporter-sine .
+build: docker
 
-push:
-	docker push mheers/prometheus-exporter-sine
+docker: ##  Builds the application for amd64 and arm64
+	docker buildx build --platform linux/amd64,linux/arm64 -t mheers/prometheus-exporter-sine:latest --push .
